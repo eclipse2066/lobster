@@ -80,6 +80,9 @@ class JobHandler(object):
         if self._use_local and not self._chirp:
             files = ['file:' + os.path.basename(f) for f in files]
 
+        if self._chirp:
+            files = [f.replace('/hadoop', '', 1) for f in files if f.startswith('/hadoop')]
+
         if self._file_based:
             lumis = None
         else:
@@ -153,7 +156,7 @@ class JobHandler(object):
             inputs += [(f, os.path.basename(f), False) for id, f in self._files if f]
 
     def update_config(self, config):
-        if self._merge:
+        if self._merge or (self._use_local and self._chirp):
             config['transfer inputs'] = True
 
 class JobProvider(job.JobProvider):
@@ -389,7 +392,7 @@ class JobProvider(job.JobProvider):
                         'taskid': self.taskid
                     },
                     'arguments': args,
-                    'chirp prefix': self.stageout,
+                    'chirp prefix': self.stageout.replace('/hadoop', '', 1),
                     'chirp server': self.__chirp,
                     'output files': stageout,
                     'want summary': sum
